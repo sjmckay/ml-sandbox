@@ -1,32 +1,17 @@
 import numpy as np
 
 
-def load_data_set(target='galaxy_mnist', dir='./.tmp', framework='torch'):
-    if target == 'galaxy_mnist':
-        from galaxy_mnist import GalaxyMNIST
-        catalog, labels = GalaxyMNIST(
-            root=dir,
-            download=True,
-            train=True  # by default, or set False for test set
-        )
-    elif target == 'gz_candels':
-        from galaxy_datasets import gz_candels
-        catalog, labels = gz_candels(
-            root=dir,
-            download=True,
-            train=True  # by default, or set False for test set
-        ) 
+def load_data_set(target='gz_candels', dir='./.tmp'):
+    if target == 'gz_candels':
+        from galaxy_datasets.pytorch import GZCandels
+        target_class = GZCandels
     else: raise ValueError(f"Unknown dataset target: {target}")
-
-    if framework == 'torch':
-        from galaxy_datasets.pytorch.galaxy_dataset import CatalogDataset
-        dataset = CatalogDataset(
-            catalog=catalog,
-            label_cols=labels.columns.tolist(),
-        )
-    else: raise ValueError(f"Unknown framework: {framework}")
-
-    return dataset
+   
+    return target_class(
+        root=dir,
+        download=True,
+        train=True  # by default, or set False for test set
+    ) 
 
 
 

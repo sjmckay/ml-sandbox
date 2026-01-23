@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ml-sandbox"
-version = "0.1.1"
+version = "0.1.2"
 description = "Galaxy morphology classification and machine learning sandbox"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -14,14 +14,11 @@ dependencies = [
     "torch",
     "scikit-learn",
     "scipy",
-    "matplotlib"
+    "matplotlib",
+    "galaxy-datasets",
+    "tqdm"
 ]
 
-[project.optional-dependencies]
-    datasets = [
-        "galaxy-mnist",
-        "galaxy-datasets"
-    ]
 
 [tool.setuptools]
 packages = ["morph_ml_sandbox"]
