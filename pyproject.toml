@@ -17,5 +17,11 @@ dependencies = [
     "matplotlib"
 ]
 
+[project.optional-dependencies]
+    datasets = [
+        "galaxy-mnist",
+        "galaxy-datasets"
+    ]
+
 [tool.setuptools]
 packages = ["morph_ml_sandbox"]
