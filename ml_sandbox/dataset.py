@@ -1,34 +1,57 @@
+import os
 import numpy as np
+import matplotlib.pyplot as plt
+from galaxy_datasets import gz_candels
+from galaxy_datasets.pytorch.galaxy_dataset import GalaxyDataset
+from torch.utils.data import DataLoader
+
+def load_catalog(dir='./.tmp'):   
+    try:
+        catalog, label_cols = gz_candels(
+            root=dir,
+            download=False,
+        )
+    except:
+        catalog, label_cols = gz_candels(
+            root=dir,
+            download=True,
+        )
+    return catalog, label_cols
 
 
-def load_data_set(target='gz_candels', dir='./.tmp'):
-    if target == 'gz_candels':
-        from galaxy_datasets.pytorch import GZCandels
-        target_class = GZCandels
-    else: raise ValueError(f"Unknown dataset target: {target}")
-   
-    return target_class(
-        root=dir,
-        download=True,
-        train=True  # by default, or set False for test set
-    ) 
+def load_dataset(dir='./.tmp', size=1000, labels=None):
+    catalog, _ = load_catalog(dir=dir)
+
+    dataset = GalaxyDataset(
+        catalog=catalog.sample(size) if size is not None else catalog,
+        label_cols=labels if labels is not None else catalog.columns.tolist()[:-2],
+        transform=None,
+    )
+
+    return dataset
 
 
+def get_dataloader(dataset, batch_size=32, num_workers=os.cpu_count()):
+    dataloader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=num_workers,
+    )
+    return dataloader
 
-def show_sample_images(dataset, num_images=5):
-    import matplotlib.pyplot as plt
-
-    fig, axes = plt.subplots(1, num_images, figsize=(15, 5))
+def show_sample_images(img_dataset, num_images=5):
+    grid_x = int(np.ceil(np.sqrt(num_images)))
+    grid_y = int(np.ceil(num_images / grid_x))
+    fig, axes = plt.subplots(grid_y, grid_x, figsize=(grid_x*3, grid_y*3))
+    axes = axes.flatten() if num_images > 1 else [axes]
     for i in range(num_images):
-        image, label = dataset[i]
-        if hasattr(image, 'numpy'):
-            image = image.numpy()
-        if image.shape[0] == 1:  # grayscale
-            image = image.squeeze(0)
-        elif image.shape[0] == 3:  # RGB
-            image = np.transpose(image, (1, 2, 0))
-        axes[i].imshow(image, cmap='gray' if image.ndim == 2 else None)
-        axes[i].set_title(f"Label: {label}")
-        axes[i].axis('off')
+        index = np.random.randint(len(img_dataset))
+        image, _ = img_dataset[index]
+        try: axes[i].set_title(f"{img_dataset.catalog.loc[index,'filename'].split('.jpg')[0]}")
+        except: axes[i].set_title(f"Image {index}")
+        axes[i].imshow(image)
+    for ax in axes:
+        ax.axis('off')
     plt.show()
 
