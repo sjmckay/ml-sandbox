@@ -5,6 +5,7 @@ from galaxy_datasets import gz_candels
 from galaxy_datasets.pytorch.galaxy_dataset import GalaxyDataset
 from torch.utils.data import DataLoader
 
+
 def load_catalog(dir='./.tmp'):   
     try:
         catalog, label_cols = gz_candels(
@@ -39,6 +40,7 @@ def get_dataloader(dataset, batch_size=32, num_workers=os.cpu_count()):
         num_workers=num_workers,
     )
     return dataloader
+
 
 def show_sample_images(img_dataset, num_images=5):
     grid_x = int(np.ceil(np.sqrt(num_images)))
