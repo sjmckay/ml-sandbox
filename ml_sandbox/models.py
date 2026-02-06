@@ -1,6 +1,7 @@
 import torch.nn as nn
-from sklearn.decomposition import RandomizedPCA
+from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline, make_pipeline
 
 
 class SimpleCNNClassifier(nn.Module):
@@ -27,22 +28,14 @@ class SimpleCNNClassifier(nn.Module):
     
 
 
-class PCARandomForestPipeline(RandomForestClassifier):
+class PCARandomForestPipeline(Pipeline):
     """A pipeline that first applies PCA for dimensionality reduction
     and then fits a Random Forest classifier.
     """
-    def __init__(self, n_components=150, **rf_kwargs):
-        super(PCARandomForestPipeline, self).__init__(**rf_kwargs)
-        self.pca = RandomizedPCA(n_components=n_components)
-
-    def fit(self, X, y):
-        X_reduced = self.pca.fit_transform(X)
-        return super().fit(X_reduced, y)
-
-    def predict(self, X):
-        X_reduced = self.pca.transform(X)
-        return super().predict(X_reduced)
-    
-    def predict_proba(self, X):
-        X_reduced = self.pca.transform(X)
-        return super().predict_proba(X_reduced)
+    def __init__(self, n_pca_comp=150, n_trees=100, random_state=42, **rf_kwargs):
+        self.pca = PCA(n_components=n_pca_comp, svd_solver='randomized', random_state=random_state)
+        self.rf = RandomForestClassifier(n_estimators=n_trees, random_state=random_state, **rf_kwargs)
+        super().__init__([
+            ("pca", self.pca),
+            ("rf", self.rf)
+        ])
