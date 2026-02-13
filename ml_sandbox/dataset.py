@@ -20,9 +20,15 @@ def load_catalog(dir='./.tmp'):
     return catalog, label_cols
 
 
+from PIL import Image
+
+def load_image(filename, dir='./.tmp'):
+    img_path = os.path.join(dir, 'images', filename)
+    image = Image(img_path)
+    return image
+
 def get_sklearn_dataset(catalog, label_cols):
-    from sklearn.model_selection import train_test_split
-    X = catalog.drop(columns=label_cols)
+    X = [load_image(fname) for fname in catalog['filename']]
     y = catalog[label_cols]
     return X, y
 
