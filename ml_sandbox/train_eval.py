@@ -1,11 +1,10 @@
 import torch
 from torch.utils.data import random_split
-
+from .models import make_pca_rf_pipeline
 from sklearn.model_selection import train_test_split
-from ml_sandbox.models import PCARandomForestPipeline
 
-def train_eval_loop_rf(dataset, test_frac=0.2, random_state=42, n_trees=100, n_pca_comp=150, **rf_kwargs):
-    """Train a Random Forest model with PCA preprocessing.
+def train_eval_loop_skl(model, dataset, test_frac=0.2, random_state=42):
+    """Train a Scikit-learn model on a given galaxy dataset.
 
     Args:
         dataset (Dataset or Dataloader): Dataset or dataloader containing images and labels.
@@ -26,13 +25,9 @@ def train_eval_loop_rf(dataset, test_frac=0.2, random_state=42, n_trees=100, n_p
     train_len = len(dataset) - test_len
     train_dataset, test_dataset = random_split(dataset, [train_len, test_len])
 
-    #TODO FIX THIS  
     X_train, y_train = zip(*[train_dataset[i] for i in range(len(train_dataset))])
     X_test, y_test = zip(*[test_dataset[i] for i in range(len(test_dataset))])
 
-    # Extract features and labels from the dataset
-    model = PCARandomForestPipeline(n_trees=n_trees, n_pca_comp=n_pca_comp, 
-                                    random_state=random_state, **rf_kwargs)
     model.fit(X_train, y_train)
 
     # evaluate model on test set

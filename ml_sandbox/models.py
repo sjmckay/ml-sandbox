@@ -27,15 +27,7 @@ class SimpleCNNClassifier(nn.Module):
         return x
     
 
-
-class PCARandomForestPipeline(Pipeline):
-    """A pipeline that first applies PCA for dimensionality reduction
-    and then fits a Random Forest classifier.
-    """
-    def __init__(self, n_pca_comp=150, n_trees=100, random_state=42, **rf_kwargs):
-        self.pca = PCA(n_components=n_pca_comp, svd_solver='randomized', random_state=random_state)
-        self.rf = RandomForestClassifier(n_estimators=n_trees, random_state=random_state, **rf_kwargs)
-        super().__init__([
-            ("pca", self.pca),
-            ("rf", self.rf)
-        ])
+def make_pca_rf_pipeline(n_pca_comp=150, n_trees=100, random_state=42, **rf_kwargs):
+    pca = PCA(n_components=n_pca_comp, random_state=random_state)
+    rf = RandomForestClassifier(n_estimators=n_trees, random_state=random_state, **rf_kwargs)
+    return make_pipeline(pca, rf)

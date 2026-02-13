@@ -25,7 +25,7 @@ def load_dataset(dir='./.tmp', size=1000, labels=None):
 
     dataset = GalaxyDataset(
         catalog=catalog.sample(size) if size is not None else catalog,
-        label_cols=labels if labels is not None else catalog.columns.tolist()[:-2],
+        label_cols=labels if labels is not None else catalog.columns.tolist()[:-4],
         transform=None,
     )
 
