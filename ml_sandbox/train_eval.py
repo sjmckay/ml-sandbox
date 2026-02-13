@@ -3,11 +3,13 @@ from torch.utils.data import random_split
 from .models import make_pca_rf_pipeline
 from sklearn.model_selection import train_test_split
 
-def train_eval_loop_skl(model, dataset, test_frac=0.2, random_state=42):
+def train_eval_loop_skl(model, X, y, test_frac=0.2, random_state=42):
     """Train a Scikit-learn model on a given galaxy dataset.
 
     Args:
-        dataset (Dataset or Dataloader): Dataset or dataloader containing images and labels.
+        model (PCARandomForestPipeline): The model to train.
+        X (array-like): The input features.
+        y (array-like): The target labels.
         test_frac (float): Proportion of the dataset to include in the test split.
         random_state (int): Random seed for reproducibility.
         n_trees (int): Number of trees in the Random Forest.
@@ -21,18 +23,11 @@ def train_eval_loop_skl(model, dataset, test_frac=0.2, random_state=42):
         y_pred (array-like): Predicted labels for the test set.
     """
 
-    test_len = int(test_frac * len(dataset))
-    train_len = len(dataset) - test_len
-    train_dataset, test_dataset = random_split(dataset, [train_len, test_len])
-
-    X_train, y_train = zip(*[train_dataset[i] for i in range(len(train_dataset))])
-    X_test, y_test = zip(*[test_dataset[i] for i in range(len(test_dataset))])
-
+    # split dataset into training and test sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_frac, random_state=random_state)   
     model.fit(X_train, y_train)
-
     # evaluate model on test set
     test_accuracy = model.score(X_test, y_test)
-    
     return model, test_accuracy, y_test, model.predict(X_test)
 
 
