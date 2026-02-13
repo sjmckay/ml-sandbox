@@ -20,6 +20,13 @@ def load_catalog(dir='./.tmp'):
     return catalog, label_cols
 
 
+def get_sklearn_dataset(catalog, label_cols):
+    from sklearn.model_selection import train_test_split
+    X = catalog.drop(columns=label_cols)
+    y = catalog[label_cols]
+    return X, y
+
+
 def load_dataset(dir='./.tmp', size=1000, labels=None):
     catalog, _ = load_catalog(dir=dir)
 
@@ -30,7 +37,6 @@ def load_dataset(dir='./.tmp', size=1000, labels=None):
     )
 
     return dataset
-
 
 def get_dataloader(dataset, batch_size=32, num_workers=os.cpu_count()):
     dataloader = DataLoader(
