@@ -22,16 +22,22 @@ def load_catalog(dir='./.tmp'):
 
 
 from PIL import Image
-
 def load_image(filename, dir='./.tmp'):
     img_path = os.path.join(dir, 'images', filename)
     image = Image.open(img_path)
     return image
 
+
 def get_sklearn_dataset(catalog, label_cols, dir='./.tmp'):
     X = [load_image(fname, dir=dir) for fname in catalog['filename']]
     y = catalog[label_cols]
     return X, y
+
+
+def split_sklearn_dataset(catalog, label_cols, test_frac=0.2, random_state=42, dir='./.tmp'):
+    X, y = get_sklearn_dataset(catalog, label_cols, dir=dir)
+    from sklearn.model_selection import train_test_split
+    return train_test_split(X, y, test_size=test_frac, random_state=random_state)
 
 
 def load_dataset(dir='./.tmp', size=1000, labels=None):
@@ -47,13 +53,13 @@ def load_dataset(dir='./.tmp', size=1000, labels=None):
     return dataset
 
 def get_dataloader(dataset, batch_size=32, num_workers=os.cpu_count(), shuffle=True):
-    dataloader = DataLoader(
+    return DataLoader(
         dataset,
         batch_size=batch_size,
         shuffle=shuffle,
         num_workers=num_workers,
+        pin_memory=True,
     )
-    return dataloader
 
 
 def show_sample_images(img_dataset, num_images=5):

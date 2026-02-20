@@ -12,9 +12,9 @@ class SimpleCNNClassifier(nn.Module):
         super(SimpleCNNClassifier, self).__init__()
         self.side = side
         self.conv1 = nn.Conv2d(input_channels, 16, kernel_size=5, padding=1)
-        self.conv2 = nn.Conv2d(16, 32, kernel_size=5, padding=1)
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
         self.pool = nn.MaxPool2d(2, 2)
-        self.relu = nn.ReLU()
+        self.relu = nn.ReLU(inplace=True)
         self.dropout = nn.Dropout(0.5)
 
         # Compute the flattened feature size dynamically
@@ -24,8 +24,8 @@ class SimpleCNNClassifier(nn.Module):
             dummy = self.pool(self.relu(self.conv2(dummy)))
             self.flat_features = dummy.numel()
         
-        self.fc1 = nn.Linear(self.flat_features, 128)  # Assuming input image size is side x side
-        self.fc2 = nn.Linear(128, num_classes)
+        self.fc1 = nn.Linear(self.flat_features, 64)  # Assuming input image size is side x side
+        self.fc2 = nn.Linear(64, num_classes)
 
     def forward(self, x):
         x = self.pool(self.relu(self.conv1(x)))
