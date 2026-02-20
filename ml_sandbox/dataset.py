@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from galaxy_datasets import gz_candels
 from galaxy_datasets.pytorch.galaxy_dataset import GalaxyDataset
 from torch.utils.data import DataLoader
+from torchvision.transforms import ToTensor
 
 
 def load_catalog(dir='./.tmp'):   
@@ -45,11 +46,11 @@ def load_dataset(dir='./.tmp', size=1000, labels=None):
 
     return dataset
 
-def get_dataloader(dataset, batch_size=32, num_workers=os.cpu_count()):
+def get_dataloader(dataset, batch_size=32, num_workers=os.cpu_count(), shuffle=True):
     dataloader = DataLoader(
         dataset,
         batch_size=batch_size,
-        shuffle=True,
+        shuffle=shuffle,
         num_workers=num_workers,
     )
     return dataloader
