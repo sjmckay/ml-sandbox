@@ -24,11 +24,11 @@ from PIL import Image
 
 def load_image(filename, dir='./.tmp'):
     img_path = os.path.join(dir, 'images', filename)
-    image = Image(img_path)
+    image = Image.open(img_path)
     return image
 
-def get_sklearn_dataset(catalog, label_cols):
-    X = [load_image(fname) for fname in catalog['filename']]
+def get_sklearn_dataset(catalog, label_cols, dir='./.tmp'):
+    X = [load_image(fname, dir=dir) for fname in catalog['filename']]
     y = catalog[label_cols]
     return X, y
 
@@ -39,7 +39,8 @@ def load_dataset(dir='./.tmp', size=1000, labels=None):
     dataset = GalaxyDataset(
         catalog=catalog.sample(size) if size is not None else catalog,
         label_cols=labels if labels is not None else catalog.columns.tolist()[:-4],
-        transform=None,
+        transform=ToTensor(),
+        target_transform=ToTensor(),
     )
 
     return dataset
@@ -64,7 +65,11 @@ def show_sample_images(img_dataset, num_images=5):
         image, _ = img_dataset[index]
         try: axes[i].set_title(f"{img_dataset.catalog.loc[index,'filename'].split('.jpg')[0]}")
         except: axes[i].set_title(f"Image {index}")
-        axes[i].imshow(image)
+        try:
+            axes[i].imshow(image)
+        except TypeError:
+            from torchvision.transforms import ToPILImage
+            axes[i].imshow(ToPILImage()(image))
     for ax in axes:
         ax.axis('off')
     plt.show()
