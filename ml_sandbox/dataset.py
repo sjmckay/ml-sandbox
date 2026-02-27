@@ -3,9 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from galaxy_datasets import gz_candels
 from galaxy_datasets.pytorch.galaxy_dataset import GalaxyDataset
+import torch
 from torch.utils.data import DataLoader
 from torchvision.transforms import ToTensor
 from torchvision import transforms
+from sklearn.model_selection import train_test_split
 
 
 def load_catalog(dir='./.tmp'):   
@@ -29,7 +31,9 @@ def load_image(filename, dir='./.tmp'):
     return image
 
 
-def pil_d8_random(img):
+def d8_random(img):
+    """Apply a random transformation from the D8 group to the input image (tensor), for improved training.
+    Modified version of function by John Wu, NASA STIG AI lectures"""
     choice = np.random.randint(0, 7)
     if choice == 0:
         return img                              # identity
@@ -44,23 +48,23 @@ def pil_d8_random(img):
     elif choice == 5:
         return transforms.functional.vflip(img) # vertical reflection
     elif choice == 6:
-        return img.transpose(Image.TRANSPOSE)   # main diagonal
+        return torch.transpose(img, -2, -1)   # main diagonal
     elif choice == 7:
-        return img.transpose(Image.TRANSVERSE)  # anti-diagonal
+        return torch.transpose(img, -2, -1)[::-1]   # anti-diagonal
 
-# Wrap in a torchvision transform
-class RandomD8PIL(transforms.RandomApply):
+class RandomD8(transforms.RandomApply):
     def __init__(self, p=1.0):
-        super().__init__([transforms.Lambda(pil_d8_random)], p=p)
+        super().__init__([transforms.Lambda(d8_random)], p=p)
 
 def get_dataset(catalog, label_cols, size=1000, train=True, dir='./.tmp'):
-    im = load_image(catalog['filename'][0], dir=dir)
-    img_mean = np.nanmean(im,axis=(0,1))
-    img_std = np.nanstd(im,axis=(0,1))
+    subset = size//10 if size > 10 else size
+    ims = torch.stack([ToTensor()(load_image(catalog['filename'][i], dir=dir)) for i in range(subset)])
+    img_mean = ims.mean(dim=(0,2,3))
+    img_std = ims.std(dim=(0,2,3))
     if train: transforms_to_use = transforms.Compose([
-                    RandomD8PIL(),
                     transforms.ToTensor(),
-                    transforms.Normalize(mean=img_mean, std=img_std)])
+                    RandomD8(),
+                    transforms.Normalize(mean=img_mean, std=img_std),])
     else: transforms_to_use = transforms.Compose([
                     transforms.ToTensor(),
                     transforms.Normalize(mean=img_mean, std=img_std)])
@@ -68,9 +72,10 @@ def get_dataset(catalog, label_cols, size=1000, train=True, dir='./.tmp'):
         catalog=catalog.sample(size) if size is not None else catalog,
         label_cols=label_cols,
         transform=transforms_to_use,
-        target_transform=ToTensor(),
+        target_transform=lambda x: torch.tensor(x, dtype=torch.float32),
     )
     return dataset
+
 
 def get_dataloader(dataset, batch_size=32, num_workers=os.cpu_count(), shuffle=True):
     return DataLoader(
@@ -101,13 +106,15 @@ def show_sample_images(img_dataset, num_images=5):
         ax.axis('off')
     plt.show()
 
-def get_sklearn_dataset(catalog, label_cols, dir='./.tmp'):
-    X = [load_image(fname, dir=dir) for fname in catalog['filename']]
-    y = catalog[label_cols]
-    return X, y
 
-
-def split_sklearn_dataset(catalog, label_cols, test_frac=0.2, random_state=42, dir='./.tmp'):
-    X, y = get_sklearn_dataset(catalog, label_cols, dir=dir)
-    from sklearn.model_selection import train_test_split
-    return train_test_split(X, y, test_size=test_frac, random_state=random_state)
+def convert_dataset_sklearn(dataset):
+    X = []
+    y = []
+    from multiprocessing import Pool, cpu_count
+    def process_item(i):
+        img, label = dataset[i]
+        return img.numpy().flatten(), label.item()
+    with Pool(cpu_count()) as p:
+        results = p.map(process_item, range(len(dataset)))
+    X, y = zip(*results)
+    return np.array(X), np.array(y)
