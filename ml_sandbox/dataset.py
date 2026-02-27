@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import ToTensor
 from torchvision import transforms
 from sklearn.model_selection import train_test_split
-
+import multiprocessing
 
 def load_catalog(dir='./.tmp'):   
     try:
@@ -112,14 +112,35 @@ def show_sample_images(img_dataset, num_images=5):
     plt.show()
 
 
-def convert_dataset_sklearn(dataset):
-    X = []
-    y = []
-    from multiprocessing import Pool, cpu_count
-    def process_item(i):
-        img, label = dataset[i]
-        return img.numpy().flatten(), label.item()
-    with Pool(cpu_count()) as p:
-        results = p.map(process_item, range(len(dataset)))
-    X, y = zip(*results)
-    return np.array(X), np.array(y)
+def convert_dataset_sklearn(dataset, batch_size=32, num_workers=None):
+    """
+    Convert a torch-style dataset to (X, y) using parallel workers.
+
+    Uses a PyTorch `DataLoader` with `num_workers` to parallelize item loading
+    and transforms. This avoids pickling the whole dataset object for
+    multiprocessing and leverages DataLoader's worker pool.
+    """
+
+    if num_workers is None:
+        num_workers = min(4, multiprocessing.cpu_count())
+
+    def collate_fn(batch):
+        imgs = [b[0].cpu().numpy().ravel() for b in batch]
+        labels = [int(b[1].item()) if hasattr(b[1], "item") else int(b[1]) for b in batch]
+        return np.stack(imgs), np.array(labels, dtype=int)
+
+    loader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn)
+
+    X_parts = []
+    y_parts = []
+    for Xb, yb in loader:
+        X_parts.append(Xb)
+        y_parts.append(yb)
+
+    if len(X_parts) == 0:
+        return np.empty((0,)), np.empty((0,))
+
+    X = np.vstack(X_parts)
+    y = np.concatenate(y_parts)
+    return X, y
+
