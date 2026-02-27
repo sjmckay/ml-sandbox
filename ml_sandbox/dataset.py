@@ -56,17 +56,19 @@ class RandomD8(transforms.RandomApply):
     def __init__(self, p=1.0):
         super().__init__([transforms.Lambda(d8_random)], p=p)
 
-def get_dataset(catalog, label_cols, size=1000, train=True, dir='./.tmp'):
-    subset = size//10 if size > 10 else size
-    ims = torch.stack([ToTensor()(load_image(catalog['filename'][i], dir=dir)) for i in range(subset)])
+def get_dataset(catalog, label_cols, size=None, train=True, dir='./.tmp'):
+    subset = size//10 if size is not None and size > 10 else catalog.shape[0] // 10
+    ims = torch.stack([ToTensor()(load_image(catalog['filename'].iloc[i], dir=dir)) for i in range(subset)])
     img_mean = ims.mean(dim=(0,2,3))
     img_std = ims.std(dim=(0,2,3))
     if train: transforms_to_use = transforms.Compose([
                     transforms.ToTensor(),
+                    transforms.Resize((64,64)),
                     RandomD8(),
                     transforms.Normalize(mean=img_mean, std=img_std),])
     else: transforms_to_use = transforms.Compose([
                     transforms.ToTensor(),
+                    transforms.Resize((64,64)),
                     transforms.Normalize(mean=img_mean, std=img_std)])
     dataset = GalaxyDataset(
         catalog=catalog.sample(size) if size is not None else catalog,
