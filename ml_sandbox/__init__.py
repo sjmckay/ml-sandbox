@@ -1,4 +1,10 @@
-__version__ = "0.1.1"
+from importlib.metadata import version, PackageNotFoundError
+
+try:
+    __version__ = version("ml_sandbox")
+except PackageNotFoundError:
+    __version__ = "0.0.0"
+
 
 from . import models
 from . import dataset
