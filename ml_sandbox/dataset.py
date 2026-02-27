@@ -65,11 +65,14 @@ def get_dataset(catalog, label_cols, size=None, train=True, dir='./.tmp'):
                     transforms.ToTensor(),
                     transforms.Resize((64,64)),
                     RandomD8(),
-                    transforms.Normalize(mean=img_mean, std=img_std),])
+                    # transforms.Normalize(mean=img_mean, std=img_std),
+                    ])
     else: transforms_to_use = transforms.Compose([
                     transforms.ToTensor(),
                     transforms.Resize((64,64)),
-                    transforms.Normalize(mean=img_mean, std=img_std)])
+                    # transforms.Normalize(mean=img_mean, std=img_std)
+                    ])
+    ## TODO: fix labels to represent the actual classification rather than number of volunteers assigning a label.
     dataset = GalaxyDataset(
         catalog=catalog.sample(size) if size is not None else catalog,
         label_cols=label_cols,
