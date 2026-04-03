@@ -47,10 +47,6 @@ def test_cnn(dataloader, model, loss_fn, device='cpu'):
     test_loss /= num_batches
     correct /= size
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
-    print("pred shape:", pred.shape)
-    print("y shape:", y.shape)
-    print("pred classes:", pred.argmax(1)[:10])
-    print("labels:", y[:10])
     return test_loss, correct # return loss and accuracy for the epoch
 
 
