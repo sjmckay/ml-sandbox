@@ -8,7 +8,7 @@ from sklearn.pipeline import Pipeline, make_pipeline
 class SimpleCNNClassifier(nn.Module):
     """A simple Convolutional Neural Network (CNN) classifier for image data.
     """
-    def __init__(self, input_channels=1, num_classes=1):
+    def __init__(self, input_channels=1, num_classes=2):
         super().__init__()
 
         self.features = nn.Sequential(

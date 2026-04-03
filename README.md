@@ -7,13 +7,12 @@ Current plans:
 - test various transformer architectures on classification of various features.
 
 Files:
-- `models.py`: various model classes for classification
+- `models.py`: model classes for classification
 - `dataset.py`: handles galaxy dataset loading for PyTorch 
 - `train_eval.py`: handles model training and validation
 - `utils.py`: common util functions
 
-See `sandbox.ipynb` notebook for some example usage and testing. 
+See `ex_flow_torch.py` and `ex_flow_skl.py` for example usage with PyTorch and Sklearn classification of galaxy mergers. 
 
-Hopefully will build out `example_workflow.py` as well for a complete script.
 
 

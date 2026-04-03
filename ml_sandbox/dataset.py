@@ -11,6 +11,7 @@ from sklearn.model_selection import train_test_split
 import multiprocessing
 
 def load_catalog(dir='./.tmp'):   
+    """Load the catalog (currently limited to GZ-CANDELS), downloading it if necessary."""
     try:
         catalog, label_cols = gz_candels(
             root=dir,
@@ -56,7 +57,22 @@ class RandomD8(transforms.RandomApply):
     def __init__(self, p=1.0):
         super().__init__([transforms.Lambda(d8_random)], p=p)
 
-def get_dataset(catalog, label_cols, size=None, train=True, dir='./.tmp'):
+
+def assign_label_by_max_vote(row):
+    """Given a row of the catalog, return the class label assigned the most votes."""
+    return row.argmax()
+
+
+def get_dataset(catalog, label_key: str, size=None, train=True, dir='./.tmp'):
+    """Create a PyTorch Dataset from the given catalog, applying necessary transforms and augmentations.
+    
+    Args:
+        catalog (pd.DataFrame): The input catalog containing image filenames and labels.
+        label_key (str): The prefix of the label columns to use for classification.
+        size (int, optional): If specified, limits the dataset to this many samples. Defaults to None (use all).
+        train (bool, optional): Whether this dataset is for training (applies augmentations) or testing. Defaults to True.
+        dir (str, optional): Directory where images are stored. Defaults to './.tmp'.
+    """
     subset = size//10 if size is not None and size > 10 else catalog.shape[0] // 10
     ims = torch.stack([ToTensor()(load_image(catalog['filename'].iloc[i], dir=dir)) for i in range(subset)])
     img_mean = ims.mean(dim=(0,2,3))
@@ -72,17 +88,22 @@ def get_dataset(catalog, label_cols, size=None, train=True, dir='./.tmp'):
                     transforms.Resize((64,64)),
                     # transforms.Normalize(mean=img_mean, std=img_std)
                     ])
-    ## TODO: fix labels to represent the actual classification rather than number of volunteers assigning a label.
+    #pick out label columns that start with the specified key (e.g. 'merging-candels') to use as targets
+    lcols = catalog.columns[catalog.columns.str.startswith(label_key)].to_list()
+    
     dataset = GalaxyDataset(
         catalog=catalog.sample(size) if size is not None else catalog,
-        label_cols=label_cols,
+        label_cols=lcols,
         transform=transforms_to_use,
-        target_transform=lambda x: torch.tensor(x, dtype=torch.float32),
+        target_transform=transforms.Lambda(assign_label_by_max_vote),
     )
     return dataset
 
 
 def get_dataloader(dataset, batch_size=32, num_workers=os.cpu_count(), shuffle=True):
+    """
+    Create a PyTorch DataLoader from the given dataset, with specified batch size and number of workers.
+    """
     return DataLoader(
         dataset,
         batch_size=batch_size,
@@ -93,6 +114,9 @@ def get_dataloader(dataset, batch_size=32, num_workers=os.cpu_count(), shuffle=T
 
 
 def show_sample_images(img_dataset, num_images=5):
+    """
+    Show a grid of sample images from the given dataset.
+    """
     grid_x = int(np.ceil(np.sqrt(num_images)))
     grid_y = int(np.ceil(num_images / grid_x))
     fig, axes = plt.subplots(grid_y, grid_x, figsize=(grid_x*3, grid_y*3))
