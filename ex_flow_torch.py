@@ -22,10 +22,10 @@ if __name__ == '__main__':
             download=True,
     )
 
-
-
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = SimpleCNNClassifier(num_classes=np.sum(catalog.columns.str.startswith(label_key)),
                                 input_channels=3)
+    model=model.to(device)
 
     train_cat, test_cat = train_test_split(catalog, test_size=0.2, random_state=42)
 
@@ -39,14 +39,23 @@ if __name__ == '__main__':
     train_loader = get_dataloader(train_dataset, batch_size=8)
     test_loader = get_dataloader(test_dataset, batch_size=8)
 
+
+    all_labels = []
+    for _, y in train_loader:
+        all_labels.extend(y.tolist())
+
+    #mergers are heavily overrepresented, so we can compute class weights to balance the loss function
+    class_counts = torch.tensor([all_labels.count(c) for c in range(4)], dtype=torch.float)
+    weights = 1.0 / class_counts
+    weights = weights / weights.sum() * len(class_counts)  # normalize
+    weights = weights.to(device)
+
     from torch.nn import CrossEntropyLoss
-    criterion = CrossEntropyLoss()
+    criterion = CrossEntropyLoss(weight=weights)
 
     from torch.optim import Adam
     optimizer = Adam(model.parameters(), lr=1e-3)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model=model.to(device)
 
     hist = {'train_loss': [], 'train_acc': [], 'test_loss': [], 'test_acc': []}
 
