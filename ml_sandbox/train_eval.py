@@ -91,3 +91,28 @@ def plot_images_with_predictions(images, true_labels, pred_labels, class_names=N
         plt.axis('off')
     plt.tight_layout()
     plt.show()
+
+
+
+def evaluate_cnn(dataloader, model, device='cpu'):
+    from sklearn.metrics import confusion_matrix, classification_report
+    model.eval()
+    all_preds = []
+    all_labels = []
+
+    with torch.no_grad():
+        for X, y in dataloader:
+            X = X.to(device, non_blocking=True)
+            y = y.to(device, non_blocking=True)
+
+            pred = model(X)
+            preds = pred.argmax(1)
+
+            all_preds.extend(preds.cpu().numpy())
+            all_labels.extend(y.cpu().numpy())
+
+    print("Confusion Matrix:")
+    print(confusion_matrix(all_labels, all_preds))
+
+    print("\nClassification Report:")
+    print(classification_report(all_labels, all_preds, digits=4))
