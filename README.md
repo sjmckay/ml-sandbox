@@ -6,6 +6,7 @@ The dataset used here is from the Galaxy Zoo (GZ), in which citizen scientists h
 Current setup: 
 - implemented robust CNN and PCA+RF classifiers on example morphological datasets, e.g., merging galaxies, from CANDELS fields.
 - compared performance between methods.
+- currently, classes are assigned based on maximum vote and the weights are assigned based on the number of members of each class (because galaxy samples are highly imbalanced datasets), but an improvement would be to *also* weight them by the agreement of the human votes (i.e., don't weight a galaxy that had 5 votes for merger and 4 votes for isolated the same as one that was 9 votes for merger).
 - Future: test transformer architecture on classification of various features.
 
 Files:
