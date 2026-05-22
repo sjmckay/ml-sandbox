@@ -113,27 +113,10 @@ def get_dataloader(dataset, batch_size=32, num_workers=os.cpu_count(), shuffle=T
     )
 
 
-def show_sample_images(img_dataset, num_images=5):
-    """
-    Show a grid of sample images from the given dataset.
-    """
-    grid_x = int(np.ceil(np.sqrt(num_images)))
-    grid_y = int(np.ceil(num_images / grid_x))
-    fig, axes = plt.subplots(grid_y, grid_x, figsize=(grid_x*3, grid_y*3))
-    axes = axes.flatten() if num_images > 1 else [axes]
-    for i in range(num_images):
-        index = np.random.randint(len(img_dataset))
-        image, _ = img_dataset[index]
-        try: axes[i].set_title(f"{img_dataset.catalog.loc[index,'filename'].split('.jpg')[0]}")
-        except: axes[i].set_title(f"Image {index}")
-        try:
-            axes[i].imshow(image)
-        except TypeError:
-            from torchvision.transforms import ToPILImage
-            axes[i].imshow(ToPILImage()(image))
-    for ax in axes:
-        ax.axis('off')
-    plt.show()
+def _collate_fn(batch):
+    imgs = [b[0].cpu().numpy().ravel() for b in batch]
+    labels = [int(b[1].item()) if hasattr(b[1], "item") else int(b[1]) for b in batch]
+    return np.stack(imgs), np.array(labels, dtype=int)
 
 
 def convert_dataset_sklearn(dataset, batch_size=32, num_workers=None):
@@ -148,12 +131,7 @@ def convert_dataset_sklearn(dataset, batch_size=32, num_workers=None):
     if num_workers is None:
         num_workers = min(4, multiprocessing.cpu_count())
 
-    def collate_fn(batch):
-        imgs = [b[0].cpu().numpy().ravel() for b in batch]
-        labels = [int(b[1].item()) if hasattr(b[1], "item") else int(b[1]) for b in batch]
-        return np.stack(imgs), np.array(labels, dtype=int)
-
-    loader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=collate_fn)
+    loader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, collate_fn=_collate_fn)
 
     X_parts = []
     y_parts = []

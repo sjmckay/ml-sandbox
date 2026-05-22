@@ -74,26 +74,6 @@ def plot_training_history(history):
     plt.show()
 
 
-def plot_images_with_predictions(images, true_labels, pred_labels, class_names=None):
-    """Utility function to plot images with their true and predicted labels."""
-    import matplotlib.pyplot as plt
-    num_images = len(images)
-    grid_x = int(np.ceil(np.sqrt(num_images)))
-    grid_y = int(np.ceil(num_images / grid_x))
-    
-    plt.figure(figsize=(grid_x*3, grid_y*3))
-    for i in range(num_images):
-        plt.subplot(grid_y, grid_x, i+1)
-        plt.imshow(images[i].permute(1,2,0))  # Assuming images are in (C,H,W) format
-        true_label = class_names[true_labels[i]] if class_names else true_labels[i]
-        pred_label = class_names[pred_labels[i]] if class_names else pred_labels[i]
-        plt.title(f"True: {true_label}\nPred: {pred_label}")
-        plt.axis('off')
-    plt.tight_layout()
-    plt.show()
-
-
-
 def evaluate_cnn(dataloader, model, device='cpu'):
     from sklearn.metrics import confusion_matrix, classification_report
     model.eval()

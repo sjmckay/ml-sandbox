@@ -16,17 +16,20 @@ label_key = 'merging-candels'
 ###
 
 if __name__ == '__main__':
+    print('Loading catalog...')
     catalog, label_cols = gz_candels(
             root='.tmp/',
             train=True,
             download=True,
     )
+    print(f'Catalog loaded with {len(catalog)} entries and label columns: {label_cols}')
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = SimpleCNNClassifier(num_classes=np.sum(catalog.columns.str.startswith(label_key)),
                                 input_channels=3)
     model=model.to(device)
 
+    print('Splitting catalog into training and testing sets...')
     train_cat, test_cat = train_test_split(catalog, test_size=0.2, random_state=42)
 
     train_dataset = get_dataset(train_cat, label_key=label_key, 
@@ -38,7 +41,7 @@ if __name__ == '__main__':
 
     train_loader = get_dataloader(train_dataset, batch_size=8)
     test_loader = get_dataloader(test_dataset, batch_size=8)
-
+    print(f'Training set: {len(train_dataset)} samples, Testing set: {len(test_dataset)} samples')
 
     all_labels = []
     for _, y in train_loader:
@@ -59,8 +62,10 @@ if __name__ == '__main__':
 
     hist = {'train_loss': [], 'train_acc': [], 'test_loss': [], 'test_acc': []}
 
+
     do_cnn_training = True
     if do_cnn_training:
+        print('Training CNN classifier...')
         for i in range(num_epochs):
             train_loss, train_acc = train_cnn(train_loader, model, criterion, optimizer, device=device) 
             test_loss, test_acc = test_cnn(test_loader, model, criterion, device=device)
@@ -72,3 +77,4 @@ if __name__ == '__main__':
 
         from ml_sandbox.train_eval import plot_training_history
         plot_training_history(hist)
+    print('Done.')
