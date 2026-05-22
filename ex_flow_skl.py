@@ -41,6 +41,7 @@ if __name__ == '__main__':
 
     X_train, y_train = convert_dataset_sklearn(train_dataset)
     X_test, y_test = convert_dataset_sklearn(test_dataset)
+    
     print('Shape of test data:', X_test.shape, y_test.shape)
     model_skl.fit(X_train, y_train)
     test_accuracy = model_skl.score(X_test, y_test)
