@@ -6,7 +6,7 @@ from sklearn.pipeline import Pipeline, make_pipeline
 
 
 class SimpleCNNClassifier(nn.Module):
-    """A simple Convolutional Neural Network (CNN) classifier for image data.
+    """A simple Convolutional Neural Network (CNN) classifier for image data with one or more channels and variable size.
     """
     def __init__(self, input_channels=1, num_classes=2):
         super().__init__()
@@ -34,6 +34,34 @@ class SimpleCNNClassifier(nn.Module):
     def forward(self, x):
         x = self.features(x)
         x = self.adaptive_pool(x)
+        return self.classifier(x)
+    
+
+class TransformerClassifier(nn.Module):
+    """A Transformer-based classifier for image data with one or more channels and variable size.
+    """
+    def __init__(self, input_channels=1, num_classes=2, num_heads=4, num_layers=2, dim_feedforward=128):
+        super().__init__()
+
+        self.conv = nn.Conv2d(input_channels, 32, kernel_size=3, padding=1)
+        self.relu = nn.ReLU(inplace=True)
+        self.flatten = nn.Flatten()
+
+        encoder_layer = nn.TransformerEncoderLayer(d_model=32 * 28 * 28, nhead=num_heads, dim_feedforward=dim_feedforward)
+        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+
+        self.classifier = nn.Sequential(
+            nn.Linear(32 * 28 * 28, 64),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.5),
+            nn.Linear(64, num_classes),
+        )
+
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.relu(x)
+        x = self.flatten(x)
+        x = self.transformer_encoder(x.unsqueeze(1)).squeeze(1)  # Add sequence dimension
         return self.classifier(x)
     
 

@@ -4,7 +4,7 @@ import torch
 
 from galaxy_datasets import gz_candels 
 from ml_sandbox.dataset import get_dataset
-from ml_sandbox.models import SimpleCNNClassifier
+from ml_sandbox.models import SimpleCNNClassifier, TransformerClassifier
 from ml_sandbox.train_eval import train_cnn, test_cnn
 from ml_sandbox.dataset import get_dataloader
 from sklearn.model_selection import train_test_split
@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 ### INPUTS
 num_epochs = 5
 label_key = 'merging-candels'
+arch = 'cnn'  # 'cnn' or 'transformer'
 ###
 
 if __name__ == '__main__':
@@ -25,8 +26,12 @@ if __name__ == '__main__':
     print(f'Catalog loaded with {len(catalog)} entries and label columns: {label_cols}')
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = SimpleCNNClassifier(num_classes=np.sum(catalog.columns.str.startswith(label_key)),
-                                input_channels=3)
+    if arch == 'cnn':
+        model = SimpleCNNClassifier(num_classes=np.sum(catalog.columns.str.startswith(label_key)),
+                                    input_channels=3)
+    elif arch == 'transformer':
+        model = TransformerClassifier(num_classes=np.sum(catalog.columns.str.startswith(label_key)),
+                                       input_channels=3)
     model=model.to(device)
 
     print('Splitting catalog into training and testing sets...')
