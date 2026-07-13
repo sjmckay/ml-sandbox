@@ -1,10 +1,10 @@
 # ml-sandbox
-Supervised machine learning workflows for classifying galaxy images, based on Galaxy Zoo data. Currently supports traditional ML (PCA and Random Forest) and deep learning methods (CNN).
+Supervised machine learning workflows for classifying galaxy images, based on Galaxy Zoo data. Currently supports traditional ML (PCA and Random Forest) and deep learning methods (CNN, Transformer).
 
 The dataset used here is from the Galaxy Zoo (GZ), in which citizen scientists help to label galaxies (e.g., is is a merger, is it isolated, are there tidal tail features visible, is it a disk, is it a spheroid, etc). The question posed in this project is whether we can train a robust ML model to classify galaxy images (RGB) based on the GZ data.
 
 Current setup: 
-- implemented CNN and PCA+RF classifier workflows on example morphological datasets, e.g., merging galaxies, from CANDELS fields.
+- implemented CNN, Transformer, and PCA+RF classifier workflows on example morphological datasets, e.g., merging galaxies.
 - designed visualizations and evaluation metrics to compare performance between methods.
 
 
