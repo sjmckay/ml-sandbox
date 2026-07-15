@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from galaxy_datasets import gz_candels
+from galaxy_datasets import gz_candels, gz2
 from galaxy_datasets.pytorch.galaxy_dataset import GalaxyDataset
 import torch
 from torch.utils.data import DataLoader
@@ -10,15 +10,19 @@ from torchvision import transforms
 from sklearn.model_selection import train_test_split
 import multiprocessing
 
-def load_catalog(dir='./.tmp'):   
-    """Load the catalog (currently limited to GZ-CANDELS), downloading it if necessary."""
+def load_catalog(dir='./.tmp', dataset_name : str = 'candels'):   
+    """Load the catalog, downloading it if necessary."""
+    if dataset_name not in ['candels', 'gz2']: 
+        raise ValueError(f"Invalid dataset_name '{dataset_name}'. Must be one of ['candels', 'gz2'].")
+    if dataset_name == 'candels': dataset = gz_candels
+    elif dataset_name == 'gz2': dataset = gz2
     try:
-        catalog, label_cols = gz_candels(
+        catalog, label_cols = dataset(
             root=dir,
             download=False,
         )
     except:
-        catalog, label_cols = gz_candels(
+        catalog, label_cols = dataset(
             root=dir,
             download=True,
         )
@@ -63,7 +67,7 @@ def assign_label_by_max_vote(row):
     return row.argmax()
 
 
-def get_dataset(catalog, label_key: str, size=None, train=True, dir='./.tmp'):
+def get_dataset(catalog, label_keys: str, size=None, train=True, dir='./.tmp'):
     """Create a PyTorch Dataset from the given catalog, applying necessary transforms and augmentations.
     
     Args:
@@ -74,26 +78,20 @@ def get_dataset(catalog, label_key: str, size=None, train=True, dir='./.tmp'):
         dir (str, optional): Directory where images are stored. Defaults to './.tmp'.
     """
     subset = size//10 if size is not None and size > 10 else catalog.shape[0] // 10
-    ims = torch.stack([ToTensor()(load_image(catalog['filename'].iloc[i], dir=dir)) for i in range(subset)])
-    img_mean = ims.mean(dim=(0,2,3))
-    img_std = ims.std(dim=(0,2,3))
+
     if train: transforms_to_use = transforms.Compose([
                     transforms.ToTensor(),
                     transforms.Resize((64,64)),
                     RandomD8(),
-                    # transforms.Normalize(mean=img_mean, std=img_std),
                     ])
     else: transforms_to_use = transforms.Compose([
                     transforms.ToTensor(),
                     transforms.Resize((64,64)),
-                    # transforms.Normalize(mean=img_mean, std=img_std)
                     ])
     #pick out label columns that start with the specified key (e.g. 'merging-candels') to use as targets
-    lcols = catalog.columns[catalog.columns.str.startswith(label_key)].to_list()
-    
     dataset = GalaxyDataset(
         catalog=catalog.sample(size) if size is not None else catalog,
-        label_cols=lcols,
+        label_cols=label_keys,
         transform=transforms_to_use,
         target_transform=transforms.Lambda(assign_label_by_max_vote),
     )

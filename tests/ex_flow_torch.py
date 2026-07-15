@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 
-from galaxy_datasets import gz_candels 
+from galaxy_datasets import gz2 
 from ml_sandbox.dataset import get_dataset
 from ml_sandbox.models import SimpleCNNClassifier, TransformerClassifier
 from ml_sandbox.train_eval import train_cnn, test_cnn
@@ -11,14 +11,14 @@ from sklearn.model_selection import train_test_split
 
 
 ### INPUTS
-num_epochs = 5
-label_key = 'merging-candels'
+num_epochs = 20
+label_keys = ['disk-edge-on-gz2_yes','disk-edge-on-gz2_no',]
 arch = 'cnn'  # 'cnn' or 'transformer'
 ###
 
 if __name__ == '__main__':
     print('Loading catalog...')
-    catalog, label_cols = gz_candels(
+    catalog, label_cols = gz2(
             root='.tmp/',
             train=True,
             download=True,
@@ -27,20 +27,20 @@ if __name__ == '__main__':
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if arch == 'cnn':
-        model = SimpleCNNClassifier(num_classes=np.sum(catalog.columns.str.startswith(label_key)),
+        model = SimpleCNNClassifier(num_classes=len(label_keys),
                                     input_channels=3)
     elif arch == 'transformer':
-        model = TransformerClassifier(num_classes=np.sum(catalog.columns.str.startswith(label_key)),
+        model = TransformerClassifier(num_classes=len(label_keys),
                                        input_channels=3)
     model=model.to(device)
 
     print('Splitting catalog into training and testing sets...')
     train_cat, test_cat = train_test_split(catalog, test_size=0.2, random_state=42)
 
-    train_dataset = get_dataset(train_cat, label_key=label_key, 
+    train_dataset = get_dataset(train_cat, label_key=label_keys, 
                                 size=train_cat.shape[0]//5, 
                                 train=True, dir='.tmp/')
-    test_dataset = get_dataset(test_cat, label_key=label_key, 
+    test_dataset = get_dataset(test_cat, label_key=label_keys, 
                                size=test_cat.shape[0]//5, 
                                train=False, dir='.tmp/')
 

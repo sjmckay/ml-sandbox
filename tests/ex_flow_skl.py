@@ -3,7 +3,7 @@ from ml_sandbox.models import make_pca_rf_pipeline
 import numpy as np
 import matplotlib.pyplot as plt
 
-from galaxy_datasets import gz_candels 
+from galaxy_datasets import gz2 
 from ml_sandbox.dataset import get_dataset
 from ml_sandbox.models import SimpleCNNClassifier
 from ml_sandbox.dataset import get_dataloader
@@ -12,12 +12,12 @@ from ml_sandbox.utils import show_images_with_predictions
 
 
 ### INPUTS
-label_key = 'spiral-arm-count-candels'
+label_keys = ['disk-edge-on-gz2_yes','disk-edge-on-gz2_no',]
 ###
 
 if __name__ == '__main__':
     print('Loading catalog...')
-    catalog, label_cols = gz_candels(
+    catalog, label_cols = gz2(
             root='.tmp/',
             train=True,
             download=True,
@@ -27,10 +27,10 @@ if __name__ == '__main__':
     # split into training and testing/validation
     print('Splitting catalog into training and testing sets...')
     train_cat, test_cat = train_test_split(catalog, test_size=0.2, random_state=42)
-    train_dataset = get_dataset(train_cat, label_key=label_key, 
+    train_dataset = get_dataset(train_cat, label_key=label_keys, 
                                 size=train_cat.shape[0]//5, 
                                 train=True, dir='.tmp/')
-    test_dataset = get_dataset(test_cat, label_key=label_key, 
+    test_dataset = get_dataset(test_cat, label_key=label_keys, 
                                size=test_cat.shape[0]//5, 
                                train=False, dir='.tmp/')
     print(f'Training set: {len(train_dataset)} samples, Testing set: {len(test_dataset)} samples')
