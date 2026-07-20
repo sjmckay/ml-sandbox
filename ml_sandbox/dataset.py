@@ -67,7 +67,7 @@ def assign_label_by_max_vote(row):
     return row.argmax()
 
 
-def get_dataset(catalog, label_keys: str, size=None, train=True, dir='./.tmp'):
+def get_dataset(catalog, label_keys: str, size=None, train=True, resize = 32, dir='./.tmp'):
     """Create a PyTorch Dataset from the given catalog, applying necessary transforms and augmentations.
     
     Args:
@@ -81,12 +81,12 @@ def get_dataset(catalog, label_keys: str, size=None, train=True, dir='./.tmp'):
 
     if train: transforms_to_use = transforms.Compose([
                     transforms.ToTensor(),
-                    transforms.Resize((64,64)),
+                    transforms.Resize((resize, resize)),
                     RandomD8(),
                     ])
     else: transforms_to_use = transforms.Compose([
                     transforms.ToTensor(),
-                    transforms.Resize((64,64)),
+                    transforms.Resize((resize, resize)),
                     ])
     #pick out label columns that start with the specified key (e.g. 'merging-candels') to use as targets
     dataset = GalaxyDataset(

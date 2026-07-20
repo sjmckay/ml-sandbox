@@ -46,12 +46,13 @@ class TransformerClassifier(nn.Module):
         self.conv = nn.Conv2d(input_channels, 32, kernel_size=3, padding=1)
         self.relu = nn.ReLU(inplace=True)
         self.flatten = nn.Flatten()
+        self.project = nn.Linear(32 * 28 * 28, 256)  # Project to a fixed size for the transformer
 
-        encoder_layer = nn.TransformerEncoderLayer(d_model=32 * 28 * 28, nhead=num_heads, dim_feedforward=dim_feedforward)
+        encoder_layer = nn.TransformerEncoderLayer(d_model=256, nhead=num_heads, dim_feedforward=dim_feedforward, batch_first=True)
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
 
         self.classifier = nn.Sequential(
-            nn.Linear(32 * 28 * 28, 64),
+            nn.Linear(256, 64),
             nn.ReLU(inplace=True),
             nn.Dropout(0.5),
             nn.Linear(64, num_classes),
@@ -61,6 +62,7 @@ class TransformerClassifier(nn.Module):
         x = self.conv(x)
         x = self.relu(x)
         x = self.flatten(x)
+        x = self.project(x)
         x = self.transformer_encoder(x.unsqueeze(1)).squeeze(1)  # Add sequence dimension
         return self.classifier(x)
     

@@ -4,7 +4,7 @@ from .models import make_pca_rf_pipeline
 from sklearn.model_selection import train_test_split
 import numpy as np
 
-def train_cnn(dataloader, model, loss_fn, optimizer, device='cpu'):
+def train_torch_model(dataloader, model, loss_fn, optimizer, device='cpu'):
     size = len(dataloader.dataset)
     model.train()
     train_loss, correct = 0, 0
@@ -32,7 +32,7 @@ def train_cnn(dataloader, model, loss_fn, optimizer, device='cpu'):
     return train_loss, correct # return loss and accuracy for the epoch
 
 
-def test_cnn(dataloader, model, loss_fn, device='cpu'):
+def test_torch_model(dataloader, model, loss_fn, device='cpu'):
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
     model.eval()
@@ -74,7 +74,7 @@ def plot_training_history(history):
     plt.show()
 
 
-def evaluate_cnn(dataloader, model, device='cpu'):
+def evaluate_torch_model(dataloader, model, device='cpu'):
     from sklearn.metrics import confusion_matrix, classification_report
     model.eval()
     all_preds = []
